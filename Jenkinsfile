@@ -1,6 +1,5 @@
 pipeline {
-  // Use 'agent any' to run on your main Jenkins node (which is Windows)
-  agent any 
+  agent any // Runs on your Windows agent
   environment {
     REGISTRY = "docker.io"
     DOCKER_REPO = "Joesarockiam/WORK-SESSION-TRACKER"
@@ -24,15 +23,16 @@ pipeline {
     stage('Backend: unit tests') {
       steps {
         dir('.') {
-          // run pytest (adjust if your test command differs)
-          // Use 'bat' for Windows batch commands
           bat 'python -m pip install -r requirements.txt'
-          bat 'pytest -q'
+          
+          // **FIX 1:** Added --junitxml to create a test report
+          bat 'pytest --junitxml=test-results.xml'
         }
       }
       post {
         always {
-          junit allowEmptyResults: true, testResults: '**/test-*.xml' // optional, if you generate junit xml
+          // This will now find the 'test-results.xml' file
+          junit allowEmptyResults: true, testResults: '**/test-*.xml'
         }
       }
     }
@@ -40,11 +40,10 @@ pipeline {
     stage('Build backend image') {
       steps {
         script {
-          // login and push using withCredentials
-          docker.withRegistry("https://<${env.REGISTRY}>", env.DOCKER_CREDENTIALS_ID) {
+          // **FIX 2:** Removed angle brackets < > from the URL
+          docker.withRegistry("https://${env.REGISTRY}", env.DOCKER_CREDENTIALS_ID) {
             def backendImage = docker.build("${env.BACKEND_IMAGE}", ".")
             backendImage.push()
-            // also tag 'latest-backend' optionally
             backendImage.tag("latest-backend")
             backendImage.push("latest-backend")
           }
@@ -55,7 +54,6 @@ pipeline {
     stage('Frontend: build') {
       steps {
         dir('frontend') {
-          // Use 'bat' for Windows batch commands
           bat 'npm ci'
           bat 'npm run build'
         }
@@ -65,7 +63,8 @@ pipeline {
     stage('Build frontend image') {
       steps {
         script {
-          docker.withRegistry("https://<${env.REGISTRY}>", env.DOCKER_CREDENTIALS_ID) {
+          // **FIX 2:** Removed angle brackets < > from the URL
+          docker.withRegistry("https://${env.REGISTRY}", env.DOCKER_CREDENTIALS_ID) {
             def frontendImage = docker.build("${env.FRONTEND_IMAGE}", "frontend")
             frontendImage.push()
             frontendImage.tag("latest-frontend")
@@ -89,7 +88,6 @@ pipeline {
     }
     failure {
       echo "Build failed."
-      // You can add email/Slack notifications here
     }
   }
 }
