@@ -24,6 +24,7 @@ function App() {
       
       // Find the most recent session that can be controlled (scheduled, active, or paused)
       // Priority: active > paused > scheduled (most recent)
+      //sample
       const active = response.data.find(s => s.status === 'active');
       const paused = response.data.find(s => s.status === 'paused');
       const scheduled = response.data
