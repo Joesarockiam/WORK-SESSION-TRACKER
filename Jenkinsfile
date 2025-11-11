@@ -44,7 +44,7 @@ pipeline {
     stage('Build backend image') {
       steps {
         script {
-          // **THE FIX:** Removed angle brackets < > from the URL
+          // **FIX:** Removed angle brackets < > from the URL
           docker.withRegistry("https://${env.REGISTRY}", env.DOCKER_CREDENTIALS_ID) {
             def backendImage = docker.build("${env.BACKEND_IMAGE}", ".")
             backendImage.push()
@@ -68,7 +68,7 @@ pipeline {
     stage('Build frontend image') {
       steps {
         script {
-          // **THE FIX:** Removed angle brackets < > from the URL
+          // **FIX:** Removed angle brackets < > from the URL
           docker.withRegistry("https://${env.REGISTRY}", env.DOCKER_CREDENTIALS_ID) {
             def frontendImage = docker.build("${env.FRONTEND_IMAGE}", "frontend")
             frontendImage.push()
