@@ -2,7 +2,7 @@ pipeline {
   agent any // Runs on your Windows agent
   environment {
     REGISTRY = "docker.io"
-    DOCKER_REPO = "Joesarockiam/WORK-SESSION-TRACKER"
+    DOCKER_REPO = "joesarockiam/work-session-tracker"
     BACKEND_IMAGE = "${env.DOCKER_REPO}:backend-${env.BUILD_NUMBER}"
     FRONTEND_IMAGE = "${env.DOCKER_REPO}:frontend-${env.BUILD_NUMBER}"
     DOCKER_CREDENTIALS_ID = "docker-hub-credentials"
