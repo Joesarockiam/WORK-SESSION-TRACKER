@@ -66,10 +66,6 @@ deepwork_sdk/
 .DS_Store
 Thumbs.db
 
-# React
-frontend/build/
-frontend/.pnp
-frontend/.pnp.js
 
 # Production
 /coverage
