@@ -2,7 +2,10 @@ pipeline {
   agent any // Runs on your Windows agent
   environment {
     REGISTRY = "docker.io"
-    DOCKER_REPO = "joesarockiam/work-session-tracker"
+    
+    // Lowercase for Docker Hub
+    DOCKER_REPO = "joesarockiam/work-session-tracker" 
+    
     BACKEND_IMAGE = "${env.DOCKER_REPO}:backend-${env.BUILD_NUMBER}"
     FRONTEND_IMAGE = "${env.DOCKER_REPO}:frontend-${env.BUILD_NUMBER}"
     DOCKER_CREDENTIALS_ID = "docker-hub-credentials"
@@ -23,9 +26,10 @@ pipeline {
     stage('Backend: unit tests') {
       steps {
         dir('.') {
+          // Use 'bat' for Windows
           bat 'python -m pip install -r requirements.txt'
           
-          // **FIX 1:** Added --junitxml to create a test report
+          // Create the XML test report
           bat 'pytest --junitxml=test-results.xml'
         }
       }
@@ -40,7 +44,7 @@ pipeline {
     stage('Build backend image') {
       steps {
         script {
-          // **FIX 2:** Removed angle brackets < > from the URL
+          // **THE FIX:** Removed angle brackets < > from the URL
           docker.withRegistry("https://${env.REGISTRY}", env.DOCKER_CREDENTIALS_ID) {
             def backendImage = docker.build("${env.BACKEND_IMAGE}", ".")
             backendImage.push()
@@ -54,6 +58,7 @@ pipeline {
     stage('Frontend: build') {
       steps {
         dir('frontend') {
+          // Use 'bat' for Windows
           bat 'npm ci'
           bat 'npm run build'
         }
@@ -63,7 +68,7 @@ pipeline {
     stage('Build frontend image') {
       steps {
         script {
-          // **FIX 2:** Removed angle brackets < > from the URL
+          // **THE FIX:** Removed angle brackets < > from the URL
           docker.withRegistry("https://${env.REGISTRY}", env.DOCKER_CREDENTIALS_ID) {
             def frontendImage = docker.build("${env.FRONTEND_IMAGE}", "frontend")
             frontendImage.push()
