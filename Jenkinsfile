@@ -1,11 +1,12 @@
 pipeline {
-  agent { label 'docker' } // or 'any' if your Jenkins agent has docker
+  // Use 'agent any' to run on your main Jenkins node (which is Windows)
+  agent any 
   environment {
-    REGISTRY = "docker.io"                      // DockerHub: docker.io, GitHub: ghcr.io
-    DOCKER_REPO = "Joesarockiam/WORK-SESSION-TRACKER"   // Change 'joesarockiam' to your DockerHub username or ghcr.io/your-username
+    REGISTRY = "docker.io"
+    DOCKER_REPO = "Joesarockiam/WORK-SESSION-TRACKER"
     BACKEND_IMAGE = "${env.DOCKER_REPO}:backend-${env.BUILD_NUMBER}"
     FRONTEND_IMAGE = "${env.DOCKER_REPO}:frontend-${env.BUILD_NUMBER}"
-    DOCKER_CREDENTIALS_ID = "docker-hub-credentials"   // Match the Jenkins credential ID you created
+    DOCKER_CREDENTIALS_ID = "docker-hub-credentials"
   }
 
   options {
@@ -24,8 +25,9 @@ pipeline {
       steps {
         dir('.') {
           // run pytest (adjust if your test command differs)
-          sh 'python -m pip install -r requirements.txt'
-          sh 'pytest -q'
+          // Use 'bat' for Windows batch commands
+          bat 'python -m pip install -r requirements.txt'
+          bat 'pytest -q'
         }
       }
       post {
@@ -39,7 +41,7 @@ pipeline {
       steps {
         script {
           // login and push using withCredentials
-          docker.withRegistry("https://${env.REGISTRY}", env.DOCKER_CREDENTIALS_ID) {
+          docker.withRegistry("https://<${env.REGISTRY}>", env.DOCKER_CREDENTIALS_ID) {
             def backendImage = docker.build("${env.BACKEND_IMAGE}", ".")
             backendImage.push()
             // also tag 'latest-backend' optionally
@@ -53,8 +55,9 @@ pipeline {
     stage('Frontend: build') {
       steps {
         dir('frontend') {
-          sh 'npm ci'
-          sh 'npm run build'
+          // Use 'bat' for Windows batch commands
+          bat 'npm ci'
+          bat 'npm run build'
         }
       }
     }
@@ -62,7 +65,7 @@ pipeline {
     stage('Build frontend image') {
       steps {
         script {
-          docker.withRegistry("https://${env.REGISTRY}", env.DOCKER_CREDENTIALS_ID) {
+          docker.withRegistry("https://<${env.REGISTRY}>", env.DOCKER_CREDENTIALS_ID) {
             def frontendImage = docker.build("${env.FRONTEND_IMAGE}", "frontend")
             frontendImage.push()
             frontendImage.tag("latest-frontend")
