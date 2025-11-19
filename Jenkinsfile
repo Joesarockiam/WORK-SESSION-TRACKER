@@ -26,7 +26,7 @@ pipeline {
                     -Dsonar.projectKey=work-time-trackker ^
                     -Dsonar.sources=/usr/src ^
                     -Dsonar.host.url=http://host.docker.internal:9000 ^
-                    -Dsonar.login=%SONARQUBE_AUTH_TOKEN%
+                    -Dsonar.login=%SONAR_TOKEN%
                     """
                 }
             }
