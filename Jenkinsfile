@@ -16,6 +16,18 @@ pipeline {
             }
         }
 
+        stage('Debug Sonar Token') {
+            steps {
+                withSonarQubeEnv('sonar') {
+                    bat """
+                    echo SONAR_HOST_URL=%SONAR_HOST_URL%
+                    echo SONAR_AUTH_TOKEN=%SONAR_AUTH_TOKEN%
+                    echo SONAR_TOKEN=%SONAR_TOKEN%
+                    """
+                }
+            }
+        }
+
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonar') {
@@ -26,7 +38,7 @@ pipeline {
                     -Dsonar.projectKey=work-time-trackker ^
                     -Dsonar.sources=/usr/src ^
                     -Dsonar.host.url=http://host.docker.internal:9000 ^
-                    -Dsonar.login=%SONAR_TOKEN%
+                    -Dsonar.login=%SONAR_AUTH_TOKEN%
                     """
                 }
             }
@@ -68,10 +80,10 @@ pipeline {
 
     post {
         success {
-            echo "🎉 SonarQube + Docker Build + Push Successful!"
+            echo "🎉 SonarQube Analysis + Docker Build + Docker Push SUCCESSFUL!"
         }
         failure {
-            echo "❌ Pipeline Failed!"
+            echo "❌ Pipeline Failed — Check Console Output!"
         }
     }
 }
