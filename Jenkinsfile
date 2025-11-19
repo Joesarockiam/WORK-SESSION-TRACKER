@@ -2,54 +2,79 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_CREDENTIALS = credentials('dockerhub')
+        // SonarQube server name (configured in Manage Jenkins → Configure System)
+        SONARQUBE_SERVER = 'sonar'         
+
+        // Docker Hub credentials ID stored in Jenkins
+        DOCKERHUB = credentials('dockerhub')
+
+        // Docker image names
         BACKEND_IMAGE = "joesarockiam/worktracker-backend"
         FRONTEND_IMAGE = "joesarockiam/worktracker-frontend"
     }
 
     stages {
-        
-        stage('Checkout') {
+
+        stage('Checkout Code') {
             steps {
                 git branch: 'main', url: 'https://github.com/Joesarockiam/WORK-SESSION-TRACKER.git'
             }
         }
 
-        stage('Build Backend Image') {
+        stage('SonarQube Analysis') {
             steps {
-                script {
-                    sh 'docker build -t $BACKEND_IMAGE:latest -f Dockerfile .'
+                withSonarQubeEnv('sonar') {    // uses sonar-token internally
+                    bat """
+                    sonar-scanner ^
+                    -Dsonar.projectKey=work-time-trackker ^
+                    -Dsonar.sources=. ^
+                    -Dsonar.host.url=%SONAR_HOST_URL% ^
+                    -Dsonar.login=%SONARQUBE_AUTH_TOKEN%
+                    """
                 }
             }
         }
 
-        stage('Build Frontend Image') {
+        stage('Build Backend Docker Image') {
             steps {
-                script {
-                    sh 'docker build -t $FRONTEND_IMAGE:latest -f frontend/Dockerfile frontend'
-                }
+                bat """
+                docker build -t %BACKEND_IMAGE%:latest -f Dockerfile .
+                """
+            }
+        }
+
+        stage('Build Frontend Docker Image') {
+            steps {
+                bat """
+                docker build -t %FRONTEND_IMAGE%:latest -f frontend/Dockerfile frontend
+                """
             }
         }
 
         stage('Login to Docker Hub') {
             steps {
-                sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+                bat """
+                echo %DOCKERHUB_PSW% | docker login -u %DOCKERHUB_USR% --password-stdin
+                """
             }
         }
 
-        stage('Push Images') {
+        stage('Push Docker Images') {
             steps {
-                script {
-                    sh 'docker push $BACKEND_IMAGE:latest'
-                    sh 'docker push $FRONTEND_IMAGE:latest'
-                }
+                bat """
+                docker push %BACKEND_IMAGE%:latest
+                docker push %FRONTEND_IMAGE%:latest
+                """
             }
         }
     }
 
     post {
         success {
-            echo "Docker images pushed successfully!"
+            echo "🎉 Build + SonarQube + Docker Build + Docker Push — COMPLETED SUCCESSFULLY!"
+        }
+        failure {
+            echo "❌ Build Failed!"
         }
     }
 }
