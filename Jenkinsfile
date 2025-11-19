@@ -19,14 +19,13 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('sonar') {
-                    // Docker-based SonarScanner
                     bat """
                     docker run --rm ^
                     -v "%cd%":/usr/src ^
                     sonarsource/sonar-scanner-cli ^
                     -Dsonar.projectKey=work-time-trackker ^
                     -Dsonar.sources=/usr/src ^
-                    -Dsonar.host.url=%SONAR_HOST_URL% ^
+                    -Dsonar.host.url=http://host.docker.internal:9000 ^
                     -Dsonar.login=%SONARQUBE_AUTH_TOKEN%
                     """
                 }
