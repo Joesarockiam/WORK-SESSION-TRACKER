@@ -1,98 +1,55 @@
 pipeline {
-  agent any // Runs on your Windows agent
-  environment {
-    REGISTRY = "docker.io"
-    
-    // Lowercase for Docker Hub
-    DOCKER_REPO = "joesarockiam/work-session-tracker" 
-    
-    BACKEND_IMAGE = "${env.DOCKER_REPO}:backend-${env.BUILD_NUMBER}"
-    FRONTEND_IMAGE = "${env.DOCKER_REPO}:frontend-${env.BUILD_NUMBER}"
-    DOCKER_CREDENTIALS_ID = "docker-hub-credentials"
-  }
+    agent any
 
-  options {
-    buildDiscarder(logRotator(numToKeepStr: '10'))
-    timestamps()
-  }
-
-  stages {
-    stage('Checkout') {
-      steps {
-        checkout scm
-      }
+    environment {
+        DOCKERHUB_CREDENTIALS = credentials('dockerhub')
+        BACKEND_IMAGE = "joesarockiam/worktracker-backend"
+        FRONTEND_IMAGE = "joesarockiam/worktracker-frontend"
     }
 
-    stage('Backend: unit tests') {
-      steps {
-        dir('.') {
-          // Use 'bat' for Windows
-          bat 'python -m pip install -r requirements.txt'
-          
-          // Create the XML test report
-          bat 'pytest --junitxml=test-results.xml'
+    stages {
+        
+        stage('Checkout') {
+            steps {
+                git branch: 'main', url: 'https://github.com/Joesarockiam/WORK-SESSION-TRACKER.git'
+            }
         }
-      }
-      post {
-        always {
-          // This will now find the 'test-results.xml' file
-          junit allowEmptyResults: true, testResults: '**/test-*.xml'
+
+        stage('Build Backend Image') {
+            steps {
+                script {
+                    sh 'docker build -t $BACKEND_IMAGE:latest -f Dockerfile .'
+                }
+            }
         }
-      }
-    }
 
-    stage('Build backend image') {
-      steps {
-        script {
-          // **FIX:** Removed angle brackets < > from the URL
-          docker.withRegistry("https://${env.REGISTRY}", env.DOCKER_CREDENTIALS_ID) {
-            def backendImage = docker.build("${env.BACKEND_IMAGE}", ".")
-            backendImage.push()
-            backendImage.tag("latest-backend")
-            backendImage.push("latest-backend")
-          }
+        stage('Build Frontend Image') {
+            steps {
+                script {
+                    sh 'docker build -t $FRONTEND_IMAGE:latest -f frontend/Dockerfile frontend'
+                }
+            }
         }
-      }
-    }
 
-    stage('Frontend: build') {
-      steps {
-        dir('frontend') {
-          // Use 'bat' for Windows
-          bat 'npm ci'
-          bat 'npm run build'
+        stage('Login to Docker Hub') {
+            steps {
+                sh 'echo $DOCKERHUB_CREDENTIALS_PSW | docker login -u $DOCKERHUB_CREDENTIALS_USR --password-stdin'
+            }
         }
-      }
-    }
 
-    stage('Build frontend image') {
-      steps {
-        script {
-          // **FIX:** Removed angle brackets < > from the URL
-          docker.withRegistry("https://${env.REGISTRY}", env.DOCKER_CREDENTIALS_ID) {
-            def frontendImage = docker.build("${env.FRONTEND_IMAGE}", "frontend")
-            frontendImage.push()
-            frontendImage.tag("latest-frontend")
-            frontendImage.push("latest-frontend")
-          }
+        stage('Push Images') {
+            steps {
+                script {
+                    sh 'docker push $BACKEND_IMAGE:latest'
+                    sh 'docker push $FRONTEND_IMAGE:latest'
+                }
+            }
         }
-      }
     }
 
-    stage('Optional: Deploy') {
-      when { branch 'main' }
-      steps {
-        echo 'Add your deploy steps here (ssh, kubectl, docker-compose up, etc.)'
-      }
+    post {
+        success {
+            echo "Docker images pushed successfully!"
+        }
     }
-  }
-
-  post {
-    success {
-      echo "Build #${env.BUILD_NUMBER} succeeded."
-    }
-    failure {
-      echo "Build failed."
-    }
-  }
 }
