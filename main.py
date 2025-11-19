@@ -13,15 +13,24 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Add CORS middleware
+# ----------------------------
+# CORS SETTINGS FOR RENDER
+# ----------------------------
+FRONTEND_URL = "https://worktracker-frontend.onrender.com"
+
+origins = [
+    FRONTEND_URL,        # Production frontend
+    "http://localhost:3000",   # Local React dev
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Frontend URL
-    allow_credentials=False,  # Set to False since we're not using credentials
-    allow_methods=["*"],  # Allow all methods
-    allow_headers=["*"],  # Allow all headers
-    expose_headers=["*"],
-    max_age=600,  # Cache preflight requests for 10 minutes
+    allow_origins=origins,        # Allowed domains
+    allow_credentials=False,      # You don't use cookies/sessions
+    allow_methods=["*"],          # Allow all methods: GET, POST, PUT, DELETE
+    allow_headers=["*"],          # Allow all request headers
+    expose_headers=["*"],         # Expose headers if needed
+    max_age=600                   # Preflight cache
 )
 
 # Include routers
@@ -38,4 +47,3 @@ async def root():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
-
