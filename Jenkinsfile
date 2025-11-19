@@ -2,13 +2,8 @@ pipeline {
     agent any
 
     environment {
-        // SonarQube server name (configured in Manage Jenkins → Configure System)
-        SONARQUBE_SERVER = 'sonar'         
-
-        // Docker Hub credentials ID stored in Jenkins
+        SONARQUBE_SERVER = 'sonar'
         DOCKERHUB = credentials('dockerhub')
-
-        // Docker image names
         BACKEND_IMAGE = "joesarockiam/worktracker-backend"
         FRONTEND_IMAGE = "joesarockiam/worktracker-frontend"
     }
@@ -23,11 +18,14 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('sonar') {    // uses sonar-token internally
+                withSonarQubeEnv('sonar') {
+                    // Docker-based SonarScanner
                     bat """
-                    sonar-scanner ^
+                    docker run --rm ^
+                    -v "%cd%":/usr/src ^
+                    sonarsource/sonar-scanner-cli ^
                     -Dsonar.projectKey=work-time-trackker ^
-                    -Dsonar.sources=. ^
+                    -Dsonar.sources=/usr/src ^
                     -Dsonar.host.url=%SONAR_HOST_URL% ^
                     -Dsonar.login=%SONARQUBE_AUTH_TOKEN%
                     """
@@ -71,10 +69,10 @@ pipeline {
 
     post {
         success {
-            echo "🎉 Build + SonarQube + Docker Build + Docker Push — COMPLETED SUCCESSFULLY!"
+            echo "🎉 SonarQube + Docker Build + Push Successful!"
         }
         failure {
-            echo "❌ Build Failed!"
+            echo "❌ Pipeline Failed!"
         }
     }
 }
