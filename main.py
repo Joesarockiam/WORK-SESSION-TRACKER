@@ -15,8 +15,8 @@ app = FastAPI(
 # UPDATED CORS SETTINGS
 # ============================
 origins = [
-    "https://work-session-tracker.onrender.com",  # Correct frontend URL
-    "http://localhost:3000",                      # Local dev
+    "https://work-session-tracker.vercel.app",
+    "http://localhost:3000",
 ]
 
 app.add_middleware(
