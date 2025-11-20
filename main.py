@@ -16,24 +16,24 @@ app = FastAPI(
 # ----------------------------
 # CORS SETTINGS FOR RENDER
 # ----------------------------
-FRONTEND_URL = "https://worktracker-frontend.onrender.com"
+FRONTEND_URL = "https://work-session-tracker.onrender.com"  # Updated to actual URL
 
 origins = [
-    FRONTEND_URL,        # Production frontend
-    "http://localhost:3000",   # Local React dev
+    FRONTEND_URL,               # Production frontend
+    "http://localhost:3000",    # Local React dev
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,        # Allowed domains
-    allow_credentials=False,      # You don't use cookies/sessions
-    allow_methods=["*"],          # Allow all methods: GET, POST, PUT, DELETE
-    allow_headers=["*"],          # Allow all request headers
-    expose_headers=["*"],         # Expose headers if needed
-    max_age=600                   # Preflight cache
+    allow_origins=origins,
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],
+    max_age=600
 )
 
-# Include routers
+# Include API routes
 app.include_router(sessions.router)
 
 @app.get("/")
